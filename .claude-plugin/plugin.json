@@ -6,5 +6,6 @@
     "name": "neural-memory-mcp"
   },
   "license": "MIT",
-  "keywords": ["memory", "recall", "remember", "mcp", "neural-memory"]
+  "keywords": ["memory", "recall", "remember", "mcp", "neural-memory"],
+  "skills": ["./skills/neural-memory"]
 }
