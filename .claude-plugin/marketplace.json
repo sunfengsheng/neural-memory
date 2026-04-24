@@ -1,0 +1,15 @@
+{
+  "name": "neural-memory-marketplace",
+  "description": "Local marketplace for the neural-memory skill plugin",
+  "owner": {
+    "name": "neural-memory-mcp"
+  },
+  "plugins": [
+    {
+      "name": "neural-memory",
+      "version": "0.1.0",
+      "source": "./",
+      "description": "Persistent memory skill — auto-recall at session start, auto-remember at session end"
+    }
+  ]
+}

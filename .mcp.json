@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "neural-memory": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "neural_memory"],
+      "env": {
+        "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src"
+      }
+    }
+  }
+}

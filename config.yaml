@@ -1,0 +1,38 @@
+storage_dir: "D:/code/test/human-mem/neural-memory-mcp/storage"
+embedding_model: "paraphrase-multilingual-MiniLM-L12-v2"
+log_level: "INFO"
+
+decay:
+  base_decay_rate: 0.15
+  stability_growth_on_review: 0.3
+  max_stability: 10.0
+  prune_threshold: 0.05
+  importance_shield: 0.3
+  emotional_arousal_shield: 0.5
+
+activation:
+  initial_activation: 1.0
+  decay_per_hop: 0.6
+  min_activation: 0.05
+  max_hops: 4
+  max_nodes_visited: 200
+  top_k: 20
+
+ranker:
+  semantic_weight: 0.40
+  fts_weight: 0.15
+  activation_weight: 0.30
+  recency_weight: 0.10
+  strength_weight: 0.05
+
+working_memory:
+  capacity: 20
+  ttl_hours: 2.0
+  promotion_strength_threshold: 0.6
+  short_term_to_long_term_hours: 48.0
+  short_term_access_threshold: 3
+
+consolidation:
+  similarity_threshold: 0.82
+  min_cluster_size: 3
+  max_cluster_size: 15

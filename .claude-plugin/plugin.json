@@ -1,0 +1,10 @@
+{
+  "name": "neural-memory",
+  "description": "Persistent neural memory skill for Claude Code — auto-recall at session start, auto-remember at session end. Requires the neural-memory MCP server.",
+  "version": "0.1.0",
+  "author": {
+    "name": "neural-memory-mcp"
+  },
+  "license": "MIT",
+  "keywords": ["memory", "recall", "remember", "mcp", "neural-memory"]
+}
