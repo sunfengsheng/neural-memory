@@ -1,8 +1,9 @@
 {
-  "name": "neural-memory-marketplace",
-  "description": "Local marketplace for the neural-memory skill plugin",
+  "name": "neural-memory",
+  "id": "neural-memory",
+  "description": "Neural memory plugin marketplace",
   "owner": {
-    "name": "neural-memory-mcp"
+    "name": "sunfengsheng"
   },
   "plugins": [
     {
