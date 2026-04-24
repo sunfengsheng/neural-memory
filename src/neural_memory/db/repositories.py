@@ -177,15 +177,35 @@ class NeuronRepository:
             rows = await cursor.fetchall()
             return [(r["id"], r["embedding"]) for r in rows]
 
+    @staticmethod
+    def _sanitize_fts_query(query: str) -> str:
+        """Sanitize a query string for FTS5 MATCH.
+
+        FTS5 treats hyphens as column selectors (``col:term``) and other
+        punctuation as special syntax.  We quote each token individually so
+        the query is interpreted as a simple term search.
+        """
+        import re
+        # Split on whitespace, strip non-alphanumeric edges, quote each token
+        tokens: list[str] = []
+        for token in query.split():
+            # Remove characters that are problematic inside FTS5 quoted strings
+            cleaned = re.sub(r'[^\w]', ' ', token).strip()
+            if cleaned:
+                # Double-quote each token so FTS5 treats it literally
+                tokens.append(f'"{cleaned}"')
+        return " ".join(tokens) if tokens else '""'
+
     async def fts_search(self, query: str, limit: int = 20) -> list[Neuron]:
         """Full-text search using FTS5."""
+        safe_query = self._sanitize_fts_query(query)
         async with self._db.read() as conn:
             cursor = await conn.execute(
                 """SELECT neurons.* FROM neurons_fts
                    JOIN neurons ON neurons.rowid = neurons_fts.rowid
                    WHERE neurons_fts MATCH ?
                    ORDER BY rank LIMIT ?""",
-                (query, limit),
+                (safe_query, limit),
             )
             rows = await cursor.fetchall()
             return [self._row_to_neuron(r) for r in rows]
