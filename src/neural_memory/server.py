@@ -271,7 +271,10 @@ async def memory_status() -> str:
 async def main():
     """Run the Neural Memory MCP server via stdio."""
     logger.info("Neural Memory MCP Server starting...")
-    # Start model loading in background so it's ready by first tool call
-    # (loading takes ~20s, would timeout if done during handshake or tool call)
-    asyncio.create_task(_get_store())
+    # Pre-initialize the store (loads embedding model, ~20s) BEFORE accepting
+    # tool calls.  The MCP stdio handshake happens inside run_stdio_async(),
+    # but Claude Code will wait for the server process to be ready.
+    # Initializing here ensures the first tool call won't timeout.
+    await _get_store()
+    logger.info("Memory store ready, starting stdio transport...")
     await mcp.run_stdio_async()
