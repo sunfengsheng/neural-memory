@@ -1,5 +1,6 @@
 """MCP Server for Neural Memory - 6 tools for human-like memory management."""
 
+import asyncio
 import json
 import logging
 from typing import Sequence
@@ -15,6 +16,14 @@ mcp = FastMCP("neural-memory", instructions="Human-like memory system for LLMs u
 
 # Global memory store, initialized lazily
 _store: MemoryStore | None = None
+_store_lock: asyncio.Lock | None = None
+
+
+def _get_lock() -> asyncio.Lock:
+    global _store_lock
+    if _store_lock is None:
+        _store_lock = asyncio.Lock()
+    return _store_lock
 
 
 def _parse_tags(raw: str | list | None) -> list[str] | None:
@@ -47,11 +56,15 @@ def _parse_tags(raw: str | list | None) -> list[str] | None:
 
 async def _get_store() -> MemoryStore:
     global _store
-    if _store is None:
-        config = load_config()
-        logging.basicConfig(level=getattr(logging, config.log_level, logging.INFO))
-        _store = MemoryStore(config)
-        await _store.initialize()
+    if _store is not None:
+        return _store
+    async with _get_lock():
+        if _store is None:
+            config = load_config()
+            logging.basicConfig(level=getattr(logging, config.log_level, logging.INFO))
+            _store = MemoryStore(config)
+            await _store.initialize()
+            logger.info("Memory store initialized successfully.")
     return _store
 
 
@@ -257,7 +270,8 @@ async def memory_status() -> str:
 # ──────────────────────────────────────────────
 async def main():
     """Run the Neural Memory MCP server via stdio."""
-    # Initialize the store eagerly so model downloads happen at startup
-    await _get_store()
     logger.info("Neural Memory MCP Server starting...")
+    # Start model loading in background so it's ready by first tool call
+    # (loading takes ~20s, would timeout if done during handshake or tool call)
+    asyncio.create_task(_get_store())
     await mcp.run_stdio_async()
