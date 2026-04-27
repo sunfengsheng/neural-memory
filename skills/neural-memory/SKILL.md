@@ -36,20 +36,68 @@ When this skill is loaded at the start of a conversation, **immediately and sile
 
 ---
 
+## Auto-Trigger: Real-Time Memory (during conversation)
+
+**Do NOT wait until session end.** Save memories as things happen:
+
+### When to remember immediately:
+- A task/step is **completed** (file edited, bug fixed, feature added, command succeeded)
+- User states a **preference** or **decision**
+- A **non-trivial problem** is solved (root cause + fix)
+- A **milestone** is reached
+
+### What to store:
+
+**Task completion:**
+```
+remember(
+  content="[Task] <date> — <what was done>. Files: <files changed>. Result: <outcome>.",
+  neuron_type="episodic",
+  importance=0.5,
+  tags='["task","<topic>","<date>"]'
+)
+```
+
+**Preference/decision:**
+```
+remember(
+  content="User prefers/decided: <what>",
+  neuron_type="semantic",
+  importance=0.8,
+  tags='["preference","<topic>"]'
+)
+```
+
+**Bug fix:**
+```
+remember(
+  content="Fix for <error>: root cause was <X>, solution was <Y>. Affects <component>.",
+  neuron_type="procedural",
+  importance=0.6,
+  tags='["bugfix","<component>"]'
+)
+```
+
+### Discipline:
+- Do NOT narrate memory operations to the user
+- Do NOT store trivial steps (cd, ls, reading a file)
+- Do NOT store chat fluff ("user said hi")
+- Batch related small steps into one memory when possible
+
+---
+
 ## Auto-Trigger: Session End
 
-When any of these signals appear, **automatically persist** the session:
+When any of these signals appear, store a **session summary** as a final wrap-up:
 
 **End signals:**
 - User says: "谢谢", "好了", "就这样", "thanks", "done", "that's all"
-- Task is clearly completed (feature implemented, bug fixed, question answered thoroughly)
+- Task is clearly completed
 - User invokes `/remember` skill
 
-**What to do (ALL steps mandatory):**
+**What to do:**
 
-### Step 1: Session Summary (ALWAYS do this)
-
-Write a concise summary of the entire conversation and store it as ONE episodic memory:
+### Step 1: Session Summary
 
 ```
 remember(
@@ -60,35 +108,9 @@ remember(
 )
 ```
 
-The summary should capture:
-- What the user asked for / wanted to accomplish
-- What was actually done (files changed, commands run, decisions made)
-- Final outcome (succeeded, partial, blocked)
-- Any unresolved items or next steps
+### Step 2: Reflect if needed
 
-**Example:**
-```
-remember(
-  content="[Session Summary] 2026-04-27 — Reinstalled neural-memory plugin from scratch. User had MCP -32001 timeout errors. Cleaned all plugin files (cache, marketplace, installed_plugins.json, known_marketplaces.json), re-cloned from GitHub, manually registered in installed_plugins.json. Fixed successfully, all 6 MCP tools responding. Then updated SKILL.md to add full session summary memory on every conversation end.",
-  neuron_type="episodic",
-  importance=0.6,
-  tags='["session-summary","neural-memory","plugin-install","2026-04-27"]'
-)
-```
-
-### Step 2: High-Value Extractions (if any)
-
-Additionally, extract and store separately any:
-- User preferences stated ("I prefer X", "always use Y") → `importance=0.8`
-- Architectural decisions or project conventions → `importance=0.7`
-- Non-trivial bugs solved (root cause + fix) → `importance=0.6`
-- Milestones reached → `importance=0.6`
-
-These get their own `remember()` calls with appropriate `neuron_type` and `tags`.
-
-### Step 3: Reflect if needed
-
-If session was long (>30 min) or >10 memories were created, call `reflect()`.
+If session was long (>30 min) or >5 memories were created during the session, call `reflect()`.
 
 ---
 
