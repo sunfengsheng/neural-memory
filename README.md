@@ -36,9 +36,40 @@ The entire I/O pipeline is **fully async** (`aiosqlite` + `asyncio`), ensuring t
 
 ## Installation
 
+### Claude Code Plugin (recommended)
+
+One-command install as a Claude Code plugin with bundled model (zero network dependency):
+
+**Prerequisites**: Python 3.10+, [Git LFS](https://git-lfs.com/) (for the 470MB embedding model)
+
 ```bash
-git clone <this-repo>
-cd neural-memory-mcp
+# Install git-lfs if you haven't already
+git lfs install
+
+# Clone and install
+git clone https://github.com/sunfengsheng/neural-memory.git
+cd neural-memory
+
+# Linux / macOS
+bash install.sh
+
+# Windows (PowerShell)
+.\install.ps1
+```
+
+The installer will:
+1. Install Python dependencies
+2. Copy files to `~/.claude/plugins/marketplaces/neural-memory/`
+3. Set up the cache directory with correct MCP config format
+4. Verify the bundled embedding model is present
+
+After installation, **restart Claude Code** — the MCP server will auto-start in new conversations.
+
+### Manual install (standalone)
+
+```bash
+git clone https://github.com/sunfengsheng/neural-memory.git
+cd neural-memory
 pip install -e .
 ```
 
@@ -67,7 +98,7 @@ Add to your Claude Desktop MCP config (`claude_desktop_config.json`):
 }
 ```
 
-### Configure in Claude Code
+### Configure in Claude Code (manual)
 
 ```bash
 claude mcp add neural-memory -- python -m neural_memory
