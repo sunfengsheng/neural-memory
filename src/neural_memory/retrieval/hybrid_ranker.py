@@ -103,7 +103,7 @@ class HybridRanker:
             act = max(0.0, min(1.0, act))
 
             recency = self._recency_score(neuron, now)
-            strength = max(0.0, min(1.0, neuron.strength))
+            strength = self._lazy_decayed_strength(neuron, now)
 
             final = (
                 self._cfg.semantic_weight * sem
@@ -127,6 +127,22 @@ class HybridRanker:
 
         results.sort(key=lambda r: r.final_score, reverse=True)
         return results[:top_k]
+
+    @staticmethod
+    def _lazy_decayed_strength(neuron: Neuron, now: datetime) -> float:
+        """Compute real-time decayed strength at query time (lazy decay).
+
+        Uses the same Ebbinghaus formula as DecayEngine but computed on-the-fly
+        so ranking always reflects current strength without needing a reflect() call.
+        Formula: S(t) = S0 * exp(-lambda * t / stability)
+        """
+        hours = (now - neuron.last_decayed).total_seconds() / 3600.0
+        if hours <= 0:
+            return max(0.0, min(1.0, neuron.strength))
+        base_rate = 0.15  # matches DecayConfig.base_decay_rate default
+        effective_rate = base_rate / max(neuron.stability, 0.1)
+        decayed = neuron.strength * math.exp(-effective_rate * hours)
+        return max(0.0, min(1.0, decayed))
 
     @staticmethod
     def _recency_score(neuron: Neuron, now: datetime) -> float:

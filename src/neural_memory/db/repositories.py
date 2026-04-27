@@ -119,6 +119,23 @@ class NeuronRepository:
                 (layer.value, neuron_id),
             )
 
+    async def update_importance(self, neuron_id: str, importance: float) -> None:
+        """Update a neuron's importance score."""
+        async with self._db.transaction() as conn:
+            await conn.execute(
+                "UPDATE neurons SET importance = ? WHERE id = ?",
+                (importance, neuron_id),
+            )
+
+    async def update_tags(self, neuron_id: str, tags: list[str]) -> None:
+        """Update a neuron's tags (stored as JSON array)."""
+        import json
+        async with self._db.transaction() as conn:
+            await conn.execute(
+                "UPDATE neurons SET tags = ? WHERE id = ?",
+                (json.dumps(tags, ensure_ascii=False), neuron_id),
+            )
+
     async def update_decay_batch(self, updates: list[tuple[float, str, str]]) -> None:
         """Batch update strengths and last_decayed timestamps.
 

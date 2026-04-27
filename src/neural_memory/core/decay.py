@@ -73,6 +73,9 @@ class DecayEngine:
     def reinforce(self, neuron: Neuron) -> None:
         """Reinforce a neuron on access (restore strength, increase stability).
 
+        Also auto-increases importance when the neuron is frequently accessed
+        (access_count >= 5), capped at 1.0.
+
         Modifies the neuron in place.
         """
         neuron.strength = 1.0
@@ -83,6 +86,10 @@ class DecayEngine:
         neuron.access_count += 1
         neuron.last_accessed = datetime.now(timezone.utc)
         neuron.last_decayed = datetime.now(timezone.utc)
+
+        # Importance self-adaptation: auto-boost for frequently accessed memories
+        if neuron.access_count >= 5 and neuron.importance < 1.0:
+            neuron.importance = min(neuron.importance + 0.05, 1.0)
 
     def batch_decay(
         self, neurons: list[Neuron], now: datetime | None = None

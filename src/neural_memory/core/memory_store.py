@@ -15,6 +15,7 @@ Integrates all subsystems:
 from __future__ import annotations
 
 import logging
+import math
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -84,6 +85,9 @@ class MemoryStore:
         # File storage
         self._file_store = FileStore(config.files_path)
 
+        # Piggyback maintenance tracking
+        self._last_maintenance = datetime.now(timezone.utc)
+
     async def initialize(self) -> None:
         """Async initialization — must be called after __init__.
 
@@ -114,6 +118,9 @@ class MemoryStore:
         file_extension: str | None = None,
     ) -> dict[str, Any]:
         """Store a new memory (neuron) with auto-embedding and auto-association."""
+        # 0. Piggyback maintenance
+        await self._maybe_maintenance()
+
         # 1. File storage (optional)
         file_path = None
         file_hash = None
@@ -130,6 +137,31 @@ class MemoryStore:
         # 2. Compute embedding
         embedding_vec = await self._embedder.embed(content)
         embedding_blob = embedding_vec.tobytes()
+
+        # 2.5 Dedup check — if a near-identical memory exists, merge instead of creating new
+        dup_id = await self._dedup_check(embedding_vec, threshold=0.9)
+        if dup_id is not None:
+            existing = await self._neuron_repo.get_by_id(dup_id)
+            if existing is not None:
+                # Merge: reinforce existing, update importance to max, merge tags
+                self._decay.reinforce(existing)
+                existing.importance = max(existing.importance, importance)
+                merged_tags = list(set(existing.tags or []) | set(tags or []))
+                existing.tags = merged_tags
+                await self._neuron_repo.update_strength(
+                    dup_id, existing.strength, existing.stability,
+                )
+                await self._neuron_repo.update_importance(dup_id, existing.importance)
+                await self._neuron_repo.update_tags(dup_id, merged_tags)
+
+                logger.info(
+                    "Dedup merge: new content merged into existing neuron %s (similarity > 0.9)",
+                    dup_id[:8],
+                )
+                result = existing.to_dict()
+                result["merged_into"] = dup_id
+                result["synapses_created"] = {"temporal": 0, "semantic": 0}
+                return result
 
         # 3. Create neuron
         ntype = NeuronType(neuron_type)
@@ -214,6 +246,9 @@ class MemoryStore:
         tags: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         """Retrieve memories using hybrid search (semantic + FTS + spreading activation)."""
+        # 0. Piggyback maintenance
+        await self._maybe_maintenance()
+
         # 1. Embed query
         query_vec = await self._embedder.embed(query)
 
@@ -509,10 +544,14 @@ class MemoryStore:
 
         neurons = await self._neuron_repo.get_by_ids(accessed_ids)
         for nid, neuron in neurons.items():
+            old_importance = neuron.importance
             self._decay.reinforce(neuron)
             await self._neuron_repo.update_strength(
                 nid, neuron.strength, neuron.stability,
             )
+            # Persist importance if self-adaptation changed it
+            if neuron.importance != old_importance:
+                await self._neuron_repo.update_importance(nid, neuron.importance)
 
         # Hebbian: strengthen synapses between co-accessed neurons
         id_set = set(accessed_ids)
@@ -527,6 +566,53 @@ class MemoryStore:
                 if other in id_set:
                     syn.hebbian_update()
                     await self._synapse_repo.upsert(syn)
+
+    async def _maybe_maintenance(self) -> None:
+        """Lightweight piggyback maintenance — runs at most once every 10 minutes.
+
+        Performs only fast operations: decay + prune + working memory cleanup.
+        Skips consolidation and synapse decay to keep it quick.
+        """
+        now = datetime.now(timezone.utc)
+        elapsed = (now - self._last_maintenance).total_seconds()
+        if elapsed < 600:  # 10 minutes
+            return
+
+        self._last_maintenance = now
+        logger.info("Piggyback maintenance triggered (%.0fs since last)", elapsed)
+
+        # Fast decay + prune
+        all_neurons = await self._neuron_repo.get_all_for_decay()
+        updates, prune_ids = self._decay.batch_decay(all_neurons, now)
+        if updates:
+            await self._neuron_repo.update_decay_batch(updates)
+        for nid in prune_ids:
+            neuron = await self._neuron_repo.get_by_id(nid)
+            if neuron and neuron.file_path:
+                await self._file_store.delete(neuron.file_path)
+            await self._neuron_repo.delete(nid)
+            await self._semantic_search.remove_from_index(nid)
+            await self._working_memory.remove(nid)
+
+        # Working memory cleanup
+        expired_ids = await self._working_memory.cleanup_expired()
+        for nid in expired_ids:
+            await self._neuron_repo.update_layer(nid, MemoryLayer.SHORT_TERM)
+
+        logger.info(
+            "Piggyback maintenance done: decayed=%d, pruned=%d, wm_expired=%d",
+            len(updates), len(prune_ids), len(expired_ids),
+        )
+
+    async def _dedup_check(self, embedding_vec: np.ndarray, threshold: float = 0.9) -> str | None:
+        """Check if a very similar memory already exists.
+
+        Returns the neuron_id of the duplicate if found, else None.
+        """
+        hits = self._semantic_search.search(embedding_vec, top_k=1, min_score=threshold)
+        if hits:
+            return hits[0][0]
+        return None
 
     async def close(self) -> None:
         """Shut down the memory store."""
