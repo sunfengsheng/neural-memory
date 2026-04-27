@@ -14,16 +14,22 @@ echo "=== Neural Memory Plugin Installer ==="
 echo ""
 
 # 1. Check Python
-if ! command -v python &>/dev/null && ! command -v python3 &>/dev/null; then
+PYTHON_CMD=""
+for cmd in python3 python; do
+    if command -v "$cmd" &>/dev/null; then
+        PYTHON_CMD="$cmd"
+        break
+    fi
+done
+
+if [ -z "$PYTHON_CMD" ]; then
     echo "Error: Python 3.10+ is required but not found."
     exit 1
 fi
 
-PYTHON_CMD=$(command -v python3 || command -v python)
-PY_VERSION=$($PYTHON_CMD --version 2>&1 | grep -oP '\d+\.\d+')
-echo "[1/5] Python found: $($PYTHON_CMD --version)"
+echo "[1/6] Python found: $($PYTHON_CMD --version)"
 
-# 2. Verify model (check early before copying files)
+# 2. Verify model (fail-fast before copying files)
 echo "[2/6] Checking embedding model..."
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MODEL_FILE="$SCRIPT_DIR/models/paraphrase-multilingual-MiniLM-L12-v2/model.safetensors"
@@ -40,13 +46,13 @@ fi
 
 # 3. Install dependencies
 echo "[3/6] Installing Python dependencies..."
-$PYTHON_CMD -m pip install -e "$(pwd)" --quiet 2>&1 | tail -1 || {
+$PYTHON_CMD -m pip install -e "$SCRIPT_DIR" --quiet 2>&1 | tail -1 || {
     echo "  pip install failed, trying with --user..."
-    $PYTHON_CMD -m pip install -e "$(pwd)" --user --quiet
+    $PYTHON_CMD -m pip install -e "$SCRIPT_DIR" --user --quiet
 }
 echo "  Done."
 
-# 4. Copy to marketplace (if not already there)
+# 4. Copy to marketplace
 if [ "$SCRIPT_DIR" != "$MARKETPLACE_DIR" ]; then
     echo "[4/6] Copying to marketplace directory..."
     mkdir -p "$MARKETPLACE_DIR"
@@ -58,41 +64,22 @@ else
     echo "[4/6] Already in marketplace directory, skipping copy."
 fi
 
-# 4. Create cache directory with flat-format .mcp.json
-echo "[4/5] Setting up cache directory..."
+# 5. Create cache directory
+echo "[5/6] Setting up cache directory..."
 mkdir -p "$CACHE_DIR"
 cp -r "$MARKETPLACE_DIR/"* "$CACHE_DIR/"
 cp -r "$MARKETPLACE_DIR/.claude-plugin" "$CACHE_DIR/" 2>/dev/null || true
-
-# Write flat-format .mcp.json (cache needs this format, no mcpServers wrapper)
-cat > "$CACHE_DIR/.mcp.json" << 'MCPEOF'
-{
-  "neural-memory": {
-    "type": "stdio",
-    "command": "python",
-    "args": ["-m", "neural_memory"],
-    "env": {
-      "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src",
-      "HF_HUB_OFFLINE": "1",
-      "TRANSFORMERS_OFFLINE": "1",
-      "NEURAL_MEMORY_EMBEDDING_MODEL": "${CLAUDE_PLUGIN_ROOT}/models/paraphrase-multilingual-MiniLM-L12-v2"
-    }
-  }
-}
-MCPEOF
+cp "$MARKETPLACE_DIR/.mcp.json" "$CACHE_DIR/" 2>/dev/null || true
 echo "  Done."
 
-# 5. Verify model
-echo "[5/5] Checking embedding model..."
+# 6. Verify model in cache
+echo "[6/6] Verifying model in cache..."
 MODEL_DIR="$CACHE_DIR/models/paraphrase-multilingual-MiniLM-L12-v2"
 if [ -f "$MODEL_DIR/model.safetensors" ]; then
     SIZE=$(du -sh "$MODEL_DIR/model.safetensors" | cut -f1)
     echo "  Model found: $SIZE"
 else
-    echo "  WARNING: model.safetensors not found!"
-    echo "  If you cloned without git-lfs, run:"
-    echo "    git lfs install && git lfs pull"
-    echo "  Then re-run this script."
+    echo "  ERROR: model.safetensors not found in cache!"
     exit 1
 fi
 
