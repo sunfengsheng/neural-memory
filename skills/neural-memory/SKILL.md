@@ -97,16 +97,39 @@ When any of these signals appear, store a **session summary** as a final wrap-up
 
 **What to do:**
 
-### Step 1: Session Summary
+### Step 1: Detailed Session Summary
+
+Write a **comprehensive** summary — include key dialogue turns, reasoning, and context, not just outcomes. Target 300-800 words for meaningful sessions.
 
 ```
 remember(
-  content="[Session Summary] <date> — <1-2 sentence topic>. Details: <what was discussed, what was done, key decisions, outcomes, unresolved items>",
+  content="[Session Summary] <date> — <topic>.
+
+## 用户需求
+<what the user wanted, in their own words if possible>
+
+## 关键对话
+<important questions asked, options considered, decisions made — quote user if meaningful>
+
+## 做了什么
+<files changed, commands run, code written — be specific with paths and line numbers>
+
+## 技术细节
+<non-obvious technical context: why this approach over alternatives, gotchas encountered, configs used>
+
+## 结果
+<final state: succeeded / partial / blocked>
+
+## 待办 / 下一步
+<unresolved items, things to revisit>
+",
   neuron_type="episodic",
   importance=0.6,
   tags='["session-summary","<main-topic>","<date>"]'
 )
 ```
+
+**Why detailed**: Since we don't record every message, the summary must carry enough context that a future session can reconstruct *why* decisions were made, not just *what* was done. Include reasoning, alternatives considered, and user's stated preferences inline.
 
 ### Step 2: Reflect if needed
 
