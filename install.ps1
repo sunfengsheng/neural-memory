@@ -65,23 +65,10 @@ if (Test-Path "$MarketplaceDir\.claude-plugin") {
     Copy-Item -Path "$MarketplaceDir\.claude-plugin" -Destination $CacheDir -Recurse -Force
 }
 
-# Write flat-format .mcp.json (cache needs this, no mcpServers wrapper)
-$McpJson = @'
-{
-  "neural-memory": {
-    "type": "stdio",
-    "command": "python",
-    "args": ["-m", "neural_memory"],
-    "env": {
-      "PYTHONPATH": "${CLAUDE_PLUGIN_ROOT}/src",
-      "HF_HUB_OFFLINE": "1",
-      "TRANSFORMERS_OFFLINE": "1",
-      "NEURAL_MEMORY_EMBEDDING_MODEL": "${CLAUDE_PLUGIN_ROOT}/models/paraphrase-multilingual-MiniLM-L12-v2"
-    }
-  }
+# Copy .mcp.json to cache
+if (Test-Path "$MarketplaceDir\.mcp.json") {
+    Copy-Item -Path "$MarketplaceDir\.mcp.json" -Destination $CacheDir -Force
 }
-'@
-[System.IO.File]::WriteAllText("$CacheDir\.mcp.json", $McpJson, [System.Text.UTF8Encoding]::new($false))
 Write-Host "  Done." -ForegroundColor Green
 
 # 5. Verify model
