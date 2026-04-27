@@ -36,17 +36,29 @@ When this skill is loaded at the start of a conversation, **immediately and sile
 
 ---
 
-## Auto-Trigger: Real-Time Memory (during conversation)
+## Auto-Trigger: End of Every Message (MANDATORY)
 
-**Do NOT wait until session end.** Save memories as things happen:
+**After completing your response to EACH user message**, do a quick self-check:
 
-### When to remember immediately:
-- A task/step is **completed** (file edited, bug fixed, feature added, command succeeded)
-- User states a **preference** or **decision**
-- A **non-trivial problem** is solved (root cause + fix)
-- A **milestone** is reached
+> "Did anything worth remembering happen in this turn?"
 
-### What to store:
+If YES to any of these, call `remember(...)` before finishing:
+- A file was created/edited/deleted
+- A bug was identified or fixed
+- User stated a preference or made a decision
+- A non-trivial problem was solved
+- A command produced important results
+- An architectural or design choice was made
+
+If NO — nothing noteworthy happened (e.g., just answered a question, read a file, had a casual exchange) — skip silently.
+
+**This is not optional.** Treat it like a post-response hook: every message ends with a memory checkpoint.
+
+---
+
+## What to Remember (guidelines)
+
+### What to store (same rules for both mid-conversation and end-of-message checkpoint):
 
 **Task completion:**
 ```
