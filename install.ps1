@@ -1,7 +1,7 @@
 # Neural Memory Plugin Installer for Claude Code (Windows)
 # Usage: git clone https://github.com/sunfengsheng/neural-memory.git; cd neural-memory; .\install.ps1
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 $PluginName = "neural-memory"
 $Version = "0.1.0"
@@ -34,7 +34,12 @@ Write-Host "[1/5] Python found: $(& $PythonCmd --version)" -ForegroundColor Gree
 # 2. Install dependencies
 Write-Host "[2/5] Installing Python dependencies..." -ForegroundColor Yellow
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-& $PythonCmd -m pip install -e $ScriptDir --quiet 2>&1 | Select-Object -Last 1
+$pipOutput = & $PythonCmd -m pip install -e $ScriptDir --quiet 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  pip install failed (exit code $LASTEXITCODE)" -ForegroundColor Red
+    Write-Host $pipOutput -ForegroundColor Red
+    exit 1
+}
 Write-Host "  Done." -ForegroundColor Green
 
 # 3. Copy to marketplace
