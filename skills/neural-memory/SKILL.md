@@ -38,24 +38,57 @@ When this skill is loaded at the start of a conversation, **immediately and sile
 
 ## Auto-Trigger: Session End
 
-When any of these signals appear, **automatically persist** important learnings:
+When any of these signals appear, **automatically persist** the session:
 
 **End signals:**
 - User says: "谢谢", "好了", "就这样", "thanks", "done", "that's all"
 - Task is clearly completed (feature implemented, bug fixed, question answered thoroughly)
 - User invokes `/remember` skill
 
-**What to do:**
-1. Review the conversation for information worth persisting:
-   - User preferences stated ("I prefer X", "always use Y")
-   - Architectural decisions or project conventions established
-   - Non-trivial bugs solved (root cause + fix)
-   - Milestones reached
-   - Code patterns or snippets worth reusing
-2. For each item worth saving, call `remember(...)` with appropriate params (see importance scale below)
-3. If session was long (>30 min) or >10 memories were created, call `reflect()`
+**What to do (ALL steps mandatory):**
 
-**Do NOT remember**: trivia, ephemeral chat, anything re-derivable from code, or content already in project files.
+### Step 1: Session Summary (ALWAYS do this)
+
+Write a concise summary of the entire conversation and store it as ONE episodic memory:
+
+```
+remember(
+  content="[Session Summary] <date> — <1-2 sentence topic>. Details: <what was discussed, what was done, key decisions, outcomes, unresolved items>",
+  neuron_type="episodic",
+  importance=0.6,
+  tags='["session-summary","<main-topic>","<date>"]'
+)
+```
+
+The summary should capture:
+- What the user asked for / wanted to accomplish
+- What was actually done (files changed, commands run, decisions made)
+- Final outcome (succeeded, partial, blocked)
+- Any unresolved items or next steps
+
+**Example:**
+```
+remember(
+  content="[Session Summary] 2026-04-27 — Reinstalled neural-memory plugin from scratch. User had MCP -32001 timeout errors. Cleaned all plugin files (cache, marketplace, installed_plugins.json, known_marketplaces.json), re-cloned from GitHub, manually registered in installed_plugins.json. Fixed successfully, all 6 MCP tools responding. Then updated SKILL.md to add full session summary memory on every conversation end.",
+  neuron_type="episodic",
+  importance=0.6,
+  tags='["session-summary","neural-memory","plugin-install","2026-04-27"]'
+)
+```
+
+### Step 2: High-Value Extractions (if any)
+
+Additionally, extract and store separately any:
+- User preferences stated ("I prefer X", "always use Y") → `importance=0.8`
+- Architectural decisions or project conventions → `importance=0.7`
+- Non-trivial bugs solved (root cause + fix) → `importance=0.6`
+- Milestones reached → `importance=0.6`
+
+These get their own `remember()` calls with appropriate `neuron_type` and `tags`.
+
+### Step 3: Reflect if needed
+
+If session was long (>30 min) or >10 memories were created, call `reflect()`.
 
 ---
 
