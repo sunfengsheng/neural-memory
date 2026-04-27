@@ -23,25 +23,39 @@ PYTHON_CMD=$(command -v python3 || command -v python)
 PY_VERSION=$($PYTHON_CMD --version 2>&1 | grep -oP '\d+\.\d+')
 echo "[1/5] Python found: $($PYTHON_CMD --version)"
 
-# 2. Install dependencies
-echo "[2/5] Installing Python dependencies..."
+# 2. Verify model (check early before copying files)
+echo "[2/6] Checking embedding model..."
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+MODEL_FILE="$SCRIPT_DIR/models/paraphrase-multilingual-MiniLM-L12-v2/model.safetensors"
+if [ -f "$MODEL_FILE" ]; then
+    SIZE=$(du -sh "$MODEL_FILE" | cut -f1)
+    echo "  Model found: $SIZE"
+else
+    echo "  ERROR: model.safetensors not found!"
+    echo "  If you cloned without git-lfs, run:"
+    echo "    git lfs install && git lfs pull"
+    echo "  Then re-run this script."
+    exit 1
+fi
+
+# 3. Install dependencies
+echo "[3/6] Installing Python dependencies..."
 $PYTHON_CMD -m pip install -e "$(pwd)" --quiet 2>&1 | tail -1 || {
     echo "  pip install failed, trying with --user..."
     $PYTHON_CMD -m pip install -e "$(pwd)" --user --quiet
 }
 echo "  Done."
 
-# 3. Copy to marketplace (if not already there)
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# 4. Copy to marketplace (if not already there)
 if [ "$SCRIPT_DIR" != "$MARKETPLACE_DIR" ]; then
-    echo "[3/5] Copying to marketplace directory..."
+    echo "[4/6] Copying to marketplace directory..."
     mkdir -p "$MARKETPLACE_DIR"
     cp -r "$SCRIPT_DIR/"* "$MARKETPLACE_DIR/"
     cp -r "$SCRIPT_DIR/.claude-plugin" "$MARKETPLACE_DIR/" 2>/dev/null || true
     cp "$SCRIPT_DIR/.mcp.json" "$MARKETPLACE_DIR/" 2>/dev/null || true
     cp "$SCRIPT_DIR/.gitattributes" "$MARKETPLACE_DIR/" 2>/dev/null || true
 else
-    echo "[3/5] Already in marketplace directory, skipping copy."
+    echo "[4/6] Already in marketplace directory, skipping copy."
 fi
 
 # 4. Create cache directory with flat-format .mcp.json

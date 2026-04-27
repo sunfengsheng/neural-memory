@@ -81,7 +81,7 @@ $McpJson = @'
   }
 }
 '@
-$McpJson | Set-Content -Path "$CacheDir\.mcp.json" -Encoding UTF8
+[System.IO.File]::WriteAllText("$CacheDir\.mcp.json", $McpJson, [System.Text.UTF8Encoding]::new($false))
 Write-Host "  Done." -ForegroundColor Green
 
 # 5. Verify model
