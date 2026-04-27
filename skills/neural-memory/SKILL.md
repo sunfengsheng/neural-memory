@@ -1,6 +1,6 @@
 ---
 name: neural-memory
-description: Use at the start of every conversation to recall relevant context, when the user asks to remember/recall/forget something, when starting any non-trivial task, and at the end of a session to persist important learnings. Operates the neural-memory MCP server (6 tools).
+description: MANDATORY at conversation start — recall relevant memories BEFORE your first response. Also use when the user asks to remember/recall/forget, when starting any non-trivial task, and at session end to persist learnings. Operates the neural-memory MCP server (6 tools). NEVER skip the session-start recall.
 ---
 
 # Neural Memory Skill
