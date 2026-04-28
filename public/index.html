@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Memory Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ── Top bar ── -->
+  <header id="topbar">
+    <h1>Neural Memory Visualizer</h1>
+    <div id="stats"></div>
+    <div id="toolbar">
+      <button id="btn-refresh" title="Refresh graph">Refresh</button>
+      <button id="btn-reflect" title="Run memory maintenance cycle">Reflect</button>
+      <button id="btn-remember" title="Create new memory">+ Remember</button>
+    </div>
+  </header>
+
+  <!-- ── Main layout ── -->
+  <div id="main">
+    <!-- Left: graph -->
+    <div id="graph-container">
+      <svg id="graph"></svg>
+      <!-- Legend -->
+      <div id="legend">
+        <h4>Legend</h4>
+        <div class="legend-section">
+          <strong>Layer (shape)</strong>
+          <div><span class="shape circle-icon"></span> Working</div>
+          <div><span class="shape diamond-icon"></span> Short-term</div>
+          <div><span class="shape square-icon"></span> Long-term</div>
+        </div>
+        <div class="legend-section">
+          <strong>Type (color)</strong>
+          <div><span class="dot" style="background:#4fc3f7"></span> Semantic</div>
+          <div><span class="dot" style="background:#ff8a65"></span> Episodic</div>
+          <div><span class="dot" style="background:#81c784"></span> Procedural</div>
+          <div><span class="dot" style="background:#ce93d8"></span> Schema</div>
+        </div>
+        <div class="legend-section">
+          <strong>Synapse (line)</strong>
+          <div><span class="line-swatch" style="border-color:#90a4ae"></span> Semantic</div>
+          <div><span class="line-swatch" style="border-color:#ffd54f"></span> Temporal</div>
+          <div><span class="line-swatch" style="border-color:#ef5350"></span> Causal</div>
+          <div><span class="line-swatch" style="border-color:#7e57c2"></span> Hierarchical</div>
+          <div><span class="line-swatch" style="border-color:#26a69a"></span> Reference</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: detail panel -->
+    <aside id="panel">
+      <div id="panel-placeholder">Click a node to see details</div>
+      <div id="panel-content" class="hidden">
+        <h3 id="detail-title"></h3>
+        <div id="detail-body"></div>
+        <div id="detail-actions">
+          <button id="btn-delete" class="danger">Delete</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ── Modals ── -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal">
+      <h3 id="modal-title"></h3>
+      <div id="modal-body"></div>
+      <div id="modal-footer">
+        <button id="modal-cancel">Cancel</button>
+        <button id="modal-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

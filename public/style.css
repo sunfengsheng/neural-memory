@@ -1,0 +1,182 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #1a1a2e;
+  --surface: #16213e;
+  --surface2: #0f3460;
+  --text: #e0e0e0;
+  --text-dim: #8899aa;
+  --accent: #4fc3f7;
+  --danger: #ef5350;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Top bar ── */
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid #2a2a4a;
+  flex-shrink: 0;
+}
+#topbar h1 { font-size: 16px; font-weight: 600; white-space: nowrap; }
+#stats { font-size: 12px; color: var(--text-dim); flex: 1; }
+#toolbar { display: flex; gap: 6px; }
+
+button {
+  padding: 5px 12px;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background .15s;
+}
+button:hover { background: #1a4a7a; }
+button.danger { border-color: var(--danger); color: var(--danger); }
+button.danger:hover { background: rgba(239,83,80,.15); }
+
+/* ── Main layout ── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+#graph-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+#graph { width: 100%; height: 100%; }
+
+/* ── Legend ── */
+#legend {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(22,33,62,.92);
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 11px;
+  line-height: 1.8;
+}
+#legend h4 { margin-bottom: 4px; font-size: 12px; }
+.legend-section { margin-bottom: 6px; }
+.legend-section strong { color: var(--text-dim); font-size: 10px; text-transform: uppercase; }
+.dot {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.shape {
+  display: inline-block;
+  width: 10px; height: 10px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.circle-icon { border-radius: 50%; border: 2px solid var(--text); }
+.diamond-icon { transform: rotate(45deg); border: 2px solid var(--text); width: 8px; height: 8px; }
+.square-icon { border: 2px solid var(--text); }
+.line-swatch {
+  display: inline-block;
+  width: 20px;
+  border-top: 2px solid;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* ── Right panel ── */
+#panel {
+  width: 320px;
+  background: var(--surface);
+  border-left: 1px solid #2a2a4a;
+  padding: 16px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+#panel-placeholder { color: var(--text-dim); text-align: center; margin-top: 40%; font-size: 13px; }
+#detail-title { font-size: 14px; margin-bottom: 12px; word-break: break-all; }
+#detail-body { font-size: 12px; line-height: 1.7; }
+#detail-body .field { margin-bottom: 8px; }
+#detail-body .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; }
+#detail-body .value { margin-top: 2px; }
+#detail-body .content-preview {
+  background: var(--bg);
+  padding: 8px;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#detail-body .tag {
+  display: inline-block;
+  background: var(--surface2);
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin: 2px 2px 2px 0;
+  font-size: 11px;
+}
+#detail-actions { margin-top: 16px; }
+.hidden { display: none !important; }
+
+/* ── Modal ── */
+#modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+#modal {
+  background: var(--surface);
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 360px;
+  max-width: 480px;
+}
+#modal h3 { font-size: 15px; margin-bottom: 14px; }
+#modal-body label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 4px; margin-top: 10px; }
+#modal-body input, #modal-body textarea, #modal-body select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+}
+#modal-body textarea { resize: vertical; min-height: 80px; }
+#modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* ── Tooltip ── */
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(22,33,62,.95);
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 11px;
+  max-width: 280px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  z-index: 50;
+}
