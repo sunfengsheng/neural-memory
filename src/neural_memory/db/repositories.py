@@ -355,6 +355,13 @@ class SynapseRepository:
             )
             return cursor.rowcount
 
+    async def get_all(self) -> list[Synapse]:
+        """Get all synapses."""
+        async with self._db.read() as conn:
+            cursor = await conn.execute("SELECT * FROM synapses")
+            rows = await cursor.fetchall()
+            return [self._row_to_synapse(r) for r in rows]
+
     async def decay_all_weights(self, factor: float = 0.995) -> int:
         """Apply decay to all synapse weights."""
         async with self._db.transaction() as conn:

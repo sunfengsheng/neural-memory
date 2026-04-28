@@ -266,6 +266,23 @@ async def memory_status() -> str:
 
 
 # ──────────────────────────────────────────────
+# Tool 7: list_graph
+# ──────────────────────────────────────────────
+@mcp.tool(
+    name="list_graph",
+    description=(
+        "Return all neurons (without embedding blobs) and all synapses in the "
+        "memory system. Designed for graph visualization frontends."
+    ),
+)
+async def list_graph() -> str:
+    """Get all neurons and synapses for graph visualization."""
+    store = await _get_store()
+    result = await store.list_graph()
+    return json.dumps(result, ensure_ascii=False, indent=2)
+
+
+# ──────────────────────────────────────────────
 # Entry point
 # ──────────────────────────────────────────────
 async def main():

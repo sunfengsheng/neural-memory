@@ -535,6 +535,37 @@ class MemoryStore:
         }
 
     # ------------------------------------------------------------------
+    # list_graph: all neurons + synapses for visualization
+    # ------------------------------------------------------------------
+    async def list_graph(self) -> dict[str, Any]:
+        """Return all neurons (without embeddings) and all synapses."""
+        all_neurons = await self._neuron_repo.get_all_for_decay()
+        all_synapses = await self._synapse_repo.get_all()
+
+        neurons_out = []
+        for n in all_neurons:
+            d = n.to_dict()
+            d.pop("embedding", None)
+            d.pop("embedding_model", None)
+            neurons_out.append(d)
+
+        synapses_out = [
+            {
+                "id": s.id,
+                "pre_neuron_id": s.pre_neuron_id,
+                "post_neuron_id": s.post_neuron_id,
+                "synapse_type": s.synapse_type.value,
+                "weight": s.weight,
+                "activation_count": s.activation_count,
+                "created_at": s.created_at.isoformat(),
+                "last_activated": s.last_activated.isoformat(),
+            }
+            for s in all_synapses
+        ]
+
+        return {"neurons": neurons_out, "synapses": synapses_out}
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
     async def _reinforce_and_hebbian(self, accessed_ids: list[str]) -> None:
